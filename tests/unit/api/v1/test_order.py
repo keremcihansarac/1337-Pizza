@@ -12,7 +12,7 @@ def test_order_calculate_price_pizza_and_beverage():
     # Product-Owner just called ... can't think
     # about this right now ...
     # TODO: write correct ASSERT
-    assert result > 0
+    assert result == 15
 
 
 def test_order_calculate_price_no_pizza():
