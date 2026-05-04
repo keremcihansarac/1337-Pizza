@@ -9,7 +9,7 @@ from app.api.v1.endpoints.order.schemas import \
     JoinedPizzaPizzaTypeSchema, OrderBeverageQuantityCreateSchema, OrderCreateSchema
 from app.database.models import Order, Pizza, PizzaType, OrderBeverageQuantity, Beverage, OrderStatus
 
-
+# Satus was "COMMITED" which was wrong because the order not created yet
 def create_order(schema: OrderCreateSchema, db: Session):
     address = create_address(schema.address, db)
     order = Order(user_id=schema.user_id)
@@ -168,7 +168,7 @@ def calculate_price(price_beverage, price_pizza):
         return price_beverage
 
     # if order has pizza and beverage, return the price of pizza + beverage
-    # it was if is not None. it was a true statement which delivers a wrong asset
+    # it was "if is not None". it was a true statement which delivers a wrong asset
     if price_beverage is None:
         return price_pizza
 
