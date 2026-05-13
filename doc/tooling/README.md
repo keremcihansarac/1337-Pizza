@@ -15,18 +15,19 @@ The following lists the tools and frameworks, that are used in the project.
 The following is a collection of short hints on how to do the most essential things in a GitLab CI/CD pipeline:
 
 - How to delay a job until another job is done: 
-
+Use the keyword needs. You list the jobs that must finish first. This way, a job only starts when its "parent" job is successful.
 - How to change the image used in a task: 
-    
+Use the image keyword. You can name a different Docker image to change the environment for that specific job.
 - How do you start a task manually:
-
+Add when: manual to the job configuration. This adds a "Play" button in GitLab so a human has to start the job.
 - The Script part of the config file - what is it good for?
-
+It contains the actual shell commands. It tells the runner exactly what to do, like pip install or pytest.
 - If I want a task to run for every branch I put it into the stage ??
-
+Use the commit stage. This stage runs every time you push code to any branch. It is good for quick checks like linting.
 - If I want a task to run for every merge request I put it into the stage ??
-
+Use the acceptance stage. This is for jobs that should only run when you want to merge code, like deploying to a staging environment.
 - If I want a task to run for every commit to the main branch I put it into the stage ??
+- Use the acceptance or release stage. We use rules to make sure these jobs only run on the main branch. The acceptance stage checks the code one last time on Staging, and the release stage deploys the final version to Production.
 
 # Ruff
 
