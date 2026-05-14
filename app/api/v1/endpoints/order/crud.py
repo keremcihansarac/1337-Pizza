@@ -9,7 +9,7 @@ from app.api.v1.endpoints.order.schemas import \
     JoinedPizzaPizzaTypeSchema, OrderBeverageQuantityCreateSchema, OrderCreateSchema
 from app.database.models import Order, Pizza, PizzaType, OrderBeverageQuantity, Beverage, OrderStatus
 
-# Satus was "COMMITED" which was wrong because the order not created yet
+# Satus was "COMPLETED" which was wrong because the order not created yet
 def create_order(schema: OrderCreateSchema, db: Session):
     address = create_address(schema.address, db)
     order = Order(user_id=schema.user_id)
