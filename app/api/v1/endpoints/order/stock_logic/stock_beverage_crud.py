@@ -12,7 +12,7 @@ def beverage_is_available(beverage_id: uuid.UUID, amount: int, db: Session):
     # Check if Beverage exists
     if beverage:
         # If there is enough stock return true. Stock CAN be zero
-        # not = 0 but >= amount
+        # not > 0 but >= amount
         return beverage.stock >= amount
     else:
         return False

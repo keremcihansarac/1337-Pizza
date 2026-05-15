@@ -32,11 +32,16 @@ Use the acceptance stage. This is for jobs that should only run when you want to
 # Ruff
 
 - What is the purpose of ruff?
-
+  looking at python code and finding mistakes. it can also change the format of the code automatically,
+  which makes the code easier to read and more understandable 
 - What types of problems does it detect
-
+  . syntax errors
+  . unused imports
+  . Code that doesn't follow standard formatting rules
+  . stylistic errors
 - Why should you use a tool like ruff in a serious project?
-
+  It helps you find problems in your code at an early stage and makes sure that all the code looks the same and follows
+  the same rules.
 ## Run ruff on your local Computer
 
   It is very annoying (and takes a lot of time) to wait for the pipeline to check the syntax 
