@@ -2,11 +2,11 @@ import uuid
 
 from sqlalchemy.orm import Session
 
-from app.api.v1.endpoints.topping.schemas import ToppingCreateSchema, ToppingListItemSchema
+from app.api.v1.endpoints.topping.schemas import topping_create_schema, topping_list_item_schema
 from app.database.models import Topping
 
 
-def create_topping(schema: ToppingCreateSchema, db: Session):
+def create_topping(schema: topping_create_schema, db: Session):
     entity = Topping(**schema.dict())
     db.add(entity)
     db.commit()
@@ -26,16 +26,16 @@ def get_topping_by_name(topping_name: str, db: Session):
 def get_all_toppings(db: Session):
     entities = db.query(Topping).all()
     if entities:
-        returnEntities = []
+        return_entities = []
         for entity in entities:
-            listItemEntity = ToppingListItemSchema(
+            list_item_entity = topping_list_item_schema(
                 **{'id': entity.id, 'name': entity.name, 'price': entity.price, 'description': entity.description})
-            returnEntities.append(listItemEntity)
-        return returnEntities
+            return_entities.append(list_item_entity)
+        return return_entities
     return entities
 
 
-def update_topping(topping: Topping, changed_topping: ToppingCreateSchema, db: Session):
+def update_topping(topping: Topping, changed_topping: topping_create_schema, db: Session):
     for key, value in changed_topping.dict().items():
         setattr(topping, key, value)
 
