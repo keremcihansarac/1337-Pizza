@@ -85,11 +85,13 @@ If you like it convenient: Add a button for ruff to your toolbar!
 # SonarQube
 
 - What is the purpose of SonarQube?
+SonarQube helps find bugs, security issues, and code quality problems in a project.
 
 - What is the purpose of the quality rules of SonarQube?
-
+Quality rules help make sure that the code is written correctly and follows good coding practices.
+- 
 - What is the purpose of the quality gates of SonarQube?
-
+Quality gates check whether the code meets the required quality standards before it is accepted.
 
 ## Run SonarLint on your local Computer
 
