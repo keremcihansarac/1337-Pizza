@@ -8,6 +8,8 @@ from sqlalchemy import CheckConstraint, ForeignKey, Integer, Numeric, DateTime, 
 from sqlalchemy.orm import relationship, mapped_column, Mapped, DeclarativeBase
 from sqlalchemy.sql import func
 
+all_delete_orphan = "all, delete-orphan"
+stock_not_negative_check = "stock >= 0"
 
 class Base(DeclarativeBase):
     pass
@@ -33,7 +35,7 @@ class PizzaType(Base):
 
     dough_id: Mapped[uuid.UUID] = mapped_column(ForeignKey('dough.id'), nullable=False)
     dough: Mapped['Dough'] = relationship()
-    toppings: Mapped[List['PizzaTypeToppingQuantity']] = relationship(cascade='all, delete-orphan',
+    toppings: Mapped[List['PizzaTypeToppingQuantity']] = relationship(cascade=all_delete_orphan,
                                                                       back_populates='pizza_type')
     type: Mapped[str] = mapped_column(nullable=True)
 
@@ -68,7 +70,7 @@ class Topping(Base):
     name: Mapped[str] = mapped_column(unique=True, nullable=False)
     price: Mapped[decimal.Decimal] = mapped_column(Numeric(10, 2), nullable=False)
     description: Mapped[str] = mapped_column(nullable=False, default='')
-    stock: Mapped[int] = mapped_column(CheckConstraint('stock >= 0'), nullable=False)
+    stock: Mapped[int] = mapped_column(CheckConstraint(stock_not_negative_check), nullable=False)
 
     def __repr__(self):
         return "Topping(id='%s', name='%s', price='%s', description='%s', stock='%s')" \
@@ -82,7 +84,7 @@ class Dough(Base):
     name: Mapped[str] = mapped_column(unique=True, nullable=False)
     price: Mapped[decimal.Decimal] = mapped_column(Numeric(10, 2), nullable=False)
     description: Mapped[str] = mapped_column(nullable=False, default='')
-    stock: Mapped[int] = mapped_column(CheckConstraint('stock >= 0'), nullable=False)
+    stock: Mapped[int] = mapped_column(CheckConstraint(stock_not_negative_check), nullable=False)
 
     def __repr__(self):
         return "Dough(id='%s', name='%s', price='%s', description='%s', stock='%s')" \
@@ -94,7 +96,7 @@ class User(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     username: Mapped[str] = mapped_column(unique=False, nullable=False)
-    customer_orders: Mapped[List['Order']] = relationship(cascade='all, delete-orphan', back_populates='user')
+    customer_orders: Mapped[List['Order']] = relationship(cascade=all_delete_orphan, back_populates='user')
 
     def __repr__(self):
         return "User(id='%s', username='%s') " \
@@ -107,11 +109,11 @@ class Order(Base):
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     order_datetime: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), default=func.now(),
                                                               nullable=True)
-    beverages: Mapped[List['OrderBeverageQuantity']] = relationship(cascade='all, delete-orphan',
+    beverages: Mapped[List['OrderBeverageQuantity']] = relationship(cascade=all_delete_orphan,
                                                                     backref='customer_order')
     address_id: Mapped[uuid.UUID] = mapped_column(ForeignKey('address.id'), unique=True, nullable=False)
     address: Mapped['Address'] = relationship(cascade='all, delete', back_populates='customer_order')
-    pizzas: Mapped[List['Pizza']] = relationship(cascade='all, delete-orphan')
+    pizzas: Mapped[List['Pizza']] = relationship(cascade=all_delete_orphan)
     user: Mapped['User'] = relationship(back_populates='customer_orders')
     user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey('user.id'), nullable=False)
     order_status: Mapped[OrderStatus] = mapped_column(default=OrderStatus.TRANSMITTED, nullable=False)
@@ -142,7 +144,7 @@ class Beverage(Base):
     name: Mapped[str] = mapped_column(nullable=False, unique=True)
     price: Mapped[decimal.Decimal] = mapped_column(Numeric(10, 2), nullable=False)
     description: Mapped[str] = mapped_column(nullable=False, default='')
-    stock: Mapped[int] = mapped_column(CheckConstraint('stock >= 0'), nullable=False)
+    stock: Mapped[int] = mapped_column(CheckConstraint(stock_not_negative_check), nullable=False)
 
     def __repr__(self):
         return "Beverage(id='%s', name='%s', price='%s', description='%s', stock='%s')" \
