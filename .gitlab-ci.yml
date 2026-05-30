@@ -76,7 +76,7 @@ ruff_checking:
     - if: $CI_PIPELINE_SOURCE == "schedule"            # exclude scheduled pipelines
       when: never
 
-  sonarqube-check:
+    sonarqube-check:
     stage: commit
     image:
       name: sonarsource/sonar-scanner-cli:latest
