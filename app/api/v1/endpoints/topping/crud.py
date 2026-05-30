@@ -2,7 +2,7 @@ import uuid
 
 from sqlalchemy.orm import Session
 
-from app.api.v1.endpoints.topping.schemas import ToppingCreateSchema, ToppingListItemSchema
+from app.api.v1.endpoints.topping.schemas import ToppingCreateSchema, ToppingBaseSchema
 from app.database.models import Topping
 
 
@@ -26,12 +26,13 @@ def get_topping_by_name(topping_name: str, db: Session):
 def get_all_toppings(db: Session):
     entities = db.query(Topping).all()
     if entities:
-        returnEntities = []
+        return_entities = []
         for entity in entities:
-            listItemEntity = ToppingListItemSchema(
-                **{'id': entity.id, 'name': entity.name, 'price': entity.price, 'description': entity.description})
-            returnEntities.append(listItemEntity)
-        return returnEntities
+            list_item_entity = ToppingBaseSchema(
+                **{'name': entity.name, 'price': entity.price, 'description': entity.description}
+            )
+            return_entities.append(list_item_entity)
+        return return_entities
     return entities
 
 
