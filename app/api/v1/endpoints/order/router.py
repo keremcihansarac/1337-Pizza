@@ -19,7 +19,7 @@ from app.database.connection import SessionLocal
 
 router = APIRouter()
 
-order_not_found = "Order not found"
+order_not_found = 'Order not found'
 
 
 def get_db():

@@ -8,7 +8,7 @@ import app.api.v1.endpoints.dough.crud as dough_crud
 from app.api.v1.endpoints.dough.schemas import DoughSchema, DoughCreateSchema, DoughListItemSchema
 from app.database.connection import SessionLocal
 
-dough_not_found = "item not found"
+dough_not_found = 'item not found'
 
 
 router = APIRouter()

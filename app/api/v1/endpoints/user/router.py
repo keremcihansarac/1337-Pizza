@@ -13,7 +13,7 @@ from app.database.connection import SessionLocal
 
 router = APIRouter()
 
-item_not_found = "Item not found"
+item_not_found = 'Item not found'
 
 def get_db():
     db = SessionLocal()

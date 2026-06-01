@@ -17,7 +17,7 @@ from app.database.connection import SessionLocal
 
 router = APIRouter()
 
-pizza_type_not_found = "Pizza type not found"
+pizza_type_not_found = 'Pizza type not found'
 
 
 def get_db():

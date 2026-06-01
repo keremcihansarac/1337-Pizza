@@ -19,6 +19,7 @@ def db():
 
 def test_dough_create_read_delete(db):
     new_dough_name = f'test_dough_{uuid4()}'
+    expected_stock = 10
     number_of_doughs_before = len(dough_crud.get_all_doughs(db))
 
     # Arrange: Instantiate a new dough object
@@ -26,7 +27,7 @@ def test_dough_create_read_delete(db):
         name=new_dough_name,
         price=Decimal('1.11'),
         description='test description',
-        stock=10,
+        stock=expected_stock,
     )
 
     # Act: Add dough to database
