@@ -113,8 +113,8 @@ integration_testing:
       when: never     
 
   artifacts:
-  reports:
-    junit: report_integration_tests.xml
+    reports:
+      junit: report_integration_tests.xml
 
 sonarqube-check:
   stage: commit
