@@ -68,7 +68,7 @@ ruff_checking:
     GIT_DEPTH: 1
   script:
     - ruff check app/ tests/
-  allow_failure: true
+  allow_failure: false
   rules:
     - if: $CI_COMMIT_BRANCH                            # branch pipelines
     - if: $CI_PIPELINE_SOURCE == "merge_request_event" # merge request pipelines
