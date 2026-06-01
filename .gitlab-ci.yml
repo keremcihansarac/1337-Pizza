@@ -77,7 +77,7 @@ ruff_checking:
       when: never
 
 integration_testing:
-  stage: test
+  stage: commit
   needs:
     - create_development_container_image
   image:
@@ -85,7 +85,7 @@ integration_testing:
     entrypoint: [ "" ]
 
   services:
-    name: postgres:15.0-alpine
+    name: postgres:15.0-alpine 
     alias: db_dev 
 
   variables:
