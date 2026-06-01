@@ -84,9 +84,9 @@ integration_testing:
     name: $CI_REGISTRY_IMAGE/$DEVELOPMENT_CONTAINER_NAME:$DEVELOPMENT_CONTAINER_TAG
     entrypoint: [ "" ]
 
-  services:
-    name: postgres:15.0-alpine 
-    alias: db_dev 
+services:
+  name: postgres:15.0-alpine 
+  alias: db_dev 
 
   variables:
     GIT_DEPTH: 1
