@@ -83,11 +83,6 @@ integration_testing:
   image:
     name: $CI_REGISTRY_IMAGE/$DEVELOPMENT_CONTAINER_NAME:$DEVELOPMENT_CONTAINER_TAG
     entrypoint: [ "" ]
-
-  services:
-    - name: postgres:15.0-alpine 
-      alias: db_dev 
-
   variables:
     GIT_DEPTH: 1
     DATABASE_HOST: db-dev 
@@ -98,10 +93,11 @@ integration_testing:
     POSTGRES_USER: postgres
     POSTGRES_PASSWORD: mysecretpassword
     POSTGRES_DB: postgres
-  
+  services:
+    - name: postgres:15.0-alpine 
+      alias: db_dev 
   before_script:
     - PYTHONPATH=. alembic upgrade head
-
   script: 
     - PYTHONPATH=. pytest -x --junitxml=report_integration_tests.xml tests/integration/
   allow_failure: false
@@ -111,7 +107,6 @@ integration_testing:
     - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH    # main pipeline
     - if: $CI_PIPELINE_SOURCE == "schedule"            # exclude scheduled pipelines
       when: never     
-
   artifacts:
     reports:
       junit: report_integration_tests.xml
