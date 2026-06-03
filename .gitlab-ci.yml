@@ -85,7 +85,7 @@ integration_testing:
     entrypoint: [ "" ]
   variables:
     GIT_DEPTH: 1
-    DATABASE_HOST: db-dev             # <--- Doğru host adı
+    DATABASE_HOST: db-dev
     DATABASE_PORT: 5432
     DATABASE_USERNAME: postgres
     DATABASE_PASSWORD: mysecretpassword
@@ -95,37 +95,49 @@ integration_testing:
     POSTGRES_DB: postgres
   services:
     - name: postgres:15.0-alpine
-      alias: db-dev                  # <--- KORRİGİERT: Alt tire (_), normal tire (-) yapıldı!
+      alias: db-dev
   before_script:
     - PYTHONPATH=. alembic upgrade head
-  script: 
-    - PYTHONPATH=. pytest -x --junitxml=report_integration_tests.xml tests/integration/
+  script:
+    # FÖYDEKİ YENİ KOMUT: Hem JUnit raporu hem de Cobertura XML Coverage raporu üretiyor
+    - PYTHONPATH=. pytest -x --junitxml=report_integration_tests.xml --cov=app --cov-config=.coveragerc --cov-report=xml:integration_coverage.xml tests/integration/
   allow_failure: false
   rules:
-    - if: $CI_COMMIT_BRANCH                            # branch pipelines
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event" # merge request pipelines
-    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH    # main pipeline
-    - if: $CI_PIPELINE_SOURCE == "schedule"            # exclude scheduled pipelines
-      when: never     
+    - if: $CI_COMMIT_BRANCH
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: never
   artifacts:
+    paths:
+      - integration_coverage.xml  # FÖYDEKİ İSTEK: SonarQube okuyabilsin diye saklıyoruz
     reports:
       junit: report_integration_tests.xml
 
 sonarqube-check:
   stage: commit
-  image: 
+  image:
     name: sonarsource/sonar-scanner-cli:latest
     entrypoint: [""]
+  needs:
+    - create_development_container_image
+    - integration_testing # KORRIGIERT: SonarQube artık testlerin bitmesini BEKLİYOR!
   variables:
-    SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"  
-    GIT_DEPTH: "0"  
+    SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"
+    GIT_DEPTH: "0"
   cache:
     key: "${CI_JOB_NAME}"
     paths:
       - .sonar/cache
-  script: 
+  script:
     - sonar-scanner
-  allow_failure: true # Erlaubt das Weitermarschieren der Pipeline bei Quality-Gate-Fehlern
+  # FÖYDEKİ İSTEK: GitLab projesinde yeşil %XX Coverage rozeti görünmesi için API'den veri çeken script
+  after_script:
+    - |
+      curl -s -u "$SONAR_TOKEN:" "$SONAR_HOST_URL/api/measures/component?component=1337_Pizza&metricKeys=coverage" \
+      | sed -n 's/.*"metric":"coverage","value":"\([0-9]\+\(\.[0-9]\+\)\?\)".*/Coverage: \1/p'
+  coverage: '/Coverage:\s+([0-9]+\.[0-9]+)/'
+  allow_failure: true
   rules:
     - if: $CI_COMMIT_BRANCH                            
     - if: $CI_PIPELINE_SOURCE == "merge_request_event" 

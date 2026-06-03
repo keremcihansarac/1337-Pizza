@@ -7,7 +7,6 @@ from sqlalchemy.orm import Session
 from starlette.responses import Response
 
 import app.api.v1.endpoints.user.crud as user_crud
-# from app.api.v1.endpoints.topping.router import item_not_found
 from app.api.v1.endpoints.user.schemas import UserSchema, UserCreateSchema
 from app.database.connection import SessionLocal
 
