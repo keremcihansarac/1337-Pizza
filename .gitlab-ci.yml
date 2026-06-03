@@ -85,7 +85,7 @@ integration_testing:
     entrypoint: [ "" ]
   variables:
     GIT_DEPTH: 1
-    DATABASE_HOST: db-dev 
+    DATABASE_HOST: db-dev             # <--- Doğru host adı
     DATABASE_PORT: 5432
     DATABASE_USERNAME: postgres
     DATABASE_PASSWORD: mysecretpassword
@@ -94,8 +94,8 @@ integration_testing:
     POSTGRES_PASSWORD: mysecretpassword
     POSTGRES_DB: postgres
   services:
-    - name: postgres:15.0-alpine 
-      alias: db_dev 
+    - name: postgres:15.0-alpine
+      alias: db-dev                  # <--- KORRİGİERT: Alt tire (_), normal tire (-) yapıldı!
   before_script:
     - PYTHONPATH=. alembic upgrade head
   script: 
