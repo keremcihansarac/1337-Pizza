@@ -8,8 +8,8 @@ from sqlalchemy import CheckConstraint, ForeignKey, Integer, Numeric, DateTime, 
 from sqlalchemy.orm import relationship, mapped_column, Mapped, DeclarativeBase
 from sqlalchemy.sql import func
 
-all_delete_orphan = "all, delete-orphan"
-stock_not_negative_check = "stock >= 0"
+all_delete_orphan = 'all, delete-orphan'
+stock_not_negative_check = 'stock >= 0'
 
 class Base(DeclarativeBase):
     pass

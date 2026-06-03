@@ -46,7 +46,7 @@ def test_dough_create_read_delete(db):
     assert read_dough.name == new_dough_name
     assert read_dough.price == Decimal('1.11')
     assert read_dough.description == 'test description'
-    assert read_dough.stock == 10
+    assert read_dough.stock == 10 # noqa: PLR2004
 
     # Act: Delete dough
     dough_crud.delete_dough_by_id(created_dough_id, db)
