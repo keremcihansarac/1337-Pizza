@@ -1,3 +1,4 @@
+from decimal import Decimal
 from uuid import uuid4
 
 import pytest
@@ -7,7 +8,7 @@ from app.api.v1.endpoints.topping.schemas import ToppingCreateSchema
 from app.database.connection import SessionLocal
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope='module')
 def db():
     db = SessionLocal()
     try:
@@ -17,16 +18,18 @@ def db():
 
 
 def test_topping_create_read_delete(db):
-    new_topping_name = f"test_topping_{uuid4()}"
+    new_topping_name = f'test_topping_{uuid4()}'
     expected_stock = 15
+    expected_price = Decimal('1.99')
+    expected_description = 'test topping'
 
     number_before = len(topping_crud.get_all_toppings(db))
 
     # Arrange
     topping = ToppingCreateSchema(
         name=new_topping_name,
-        price=1.99,
-        description="test topping",
+        price=expected_price,
+        description=expected_description,
         stock=expected_stock,
     )
 
@@ -44,8 +47,8 @@ def test_topping_create_read_delete(db):
     # Assert
     assert read_topping.id == topping_id
     assert read_topping.name == new_topping_name
-    assert read_topping.price == 1.99
-    assert read_topping.description == "test topping"
+    assert read_topping.price == expected_price
+    assert read_topping.description == expected_description
     assert read_topping.stock == expected_stock
 
     # Act
