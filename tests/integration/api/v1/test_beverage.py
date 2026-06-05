@@ -58,5 +58,5 @@ def test_beverage_create_read_delete(db):
     beverages = beverage_crud.get_all_beverages(db)
     assert len(beverages) == number_before
 
-    deleted = beverage_crud.get_beverage_by_id(beverage_id, db)
-    assert deleted is None
+    deleted_beverage = beverage_crud.get_beverage_by_id(beverage_id, db)
+    assert deleted_beverage is None
