@@ -12,7 +12,7 @@ from app.api.v1.endpoints.pizza_type.schemas import PizzaTypeCreateSchema
 from app.database.connection import SessionLocal
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope='module')
 def db():
     db = SessionLocal()
     try:
@@ -25,18 +25,18 @@ def test_pizza_type_create_read_delete(db):
 
     # Arrange
     dough = DoughCreateSchema(
-        name=f"test_dough_{uuid4()}",
-        price=Decimal("1.50"),
-        description="integration test dough",
+        name=f'test_dough_{uuid4()}',
+        price=Decimal('1.50'),
+        description='integration test dough',
         stock=10,
     )
 
     created_dough = dough_crud.create_dough(dough, db)
 
     pizza_type = PizzaTypeCreateSchema(
-        name=f"pizza_{uuid4()}",
+        name=f'pizza_{uuid4()}',
         price=12.50,
-        description="integration test pizza",
+        description='integration test pizza',
         dough_id=created_dough.id,
     )
 
