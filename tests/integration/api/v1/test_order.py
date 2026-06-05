@@ -31,14 +31,17 @@ def test_order_create_read_update_delete(db):
 
     # Create order
     order_schema = OrderCreateSchema(
-        user_id=user.id,
-        address={
-            'street': 'Test Street',
-            'house_number': '1',
-            'zip_code': '64289',
-            'city': 'Darmstadt',
-        },
-    )
+    user_id=user.id,
+    address={
+        'street': 'Test Street',
+        'post_code': '64289',
+        'house_number': 1,
+        'country': 'Germany',
+        'town': 'Darmstadt',
+        'first_name': 'Kashf',
+        'last_name': 'Malik',
+    },
+)
 
     db_order = order_crud.create_order(order_schema, db)
     order_id = db_order.id
