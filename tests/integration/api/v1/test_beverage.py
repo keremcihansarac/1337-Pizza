@@ -1,3 +1,4 @@
+from decimal import Decimal
 from uuid import uuid4
 
 import pytest
@@ -7,7 +8,7 @@ from app.api.v1.endpoints.beverage.schemas import BeverageCreateSchema
 from app.database.connection import SessionLocal
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope='module')
 def db():
     db = SessionLocal()
     try:
@@ -17,16 +18,18 @@ def db():
 
 
 def test_beverage_create_read_delete(db):
-    new_beverage_name = f"test_beverage_{uuid4()}"
+    new_beverage_name = f'test_beverage_{uuid4()}'
     expected_stock = 20
+    expected_price = Decimal('2.49')
+    expected_description = 'test beverage'
 
     number_before = len(beverage_crud.get_all_beverages(db))
 
     # Arrange
     beverage = BeverageCreateSchema(
         name=new_beverage_name,
-        price=2.49,
-        description="test beverage",
+        price=expected_price,
+        description=expected_description,
         stock=expected_stock,
     )
 
@@ -44,8 +47,8 @@ def test_beverage_create_read_delete(db):
     # Assert
     assert read_beverage.id == beverage_id
     assert read_beverage.name == new_beverage_name
-    assert read_beverage.price == 2.49
-    assert read_beverage.description == "test beverage"
+    assert read_beverage.price == expected_price
+    assert read_beverage.description == expected_description
     assert read_beverage.stock == expected_stock
 
     # Act
