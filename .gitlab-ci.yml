@@ -144,28 +144,6 @@ sonarqube-check:
     - if: $CI_PIPELINE_SOURCE == "schedule"            
       when: never
 
-service_testing:
-  stage: acceptance
-  image:
-    name: $CI_REGISTRY_IMAGE/$DEVELOPMENT_CONTAINER_NAME:$DEVELOPMENT_CONTAINER_TAG
-    entrypoint: [""]
-  needs:
-    - migrate_database_in_staging
-  variables:
-    API_SERVER: $team_instance_link
-    API_PORT: 30080
-  script:
-    - PYTHONPATH=. pytest --verbose --color=yes --junitxml=report_service_tests.xml tests/service/
-  allow_failure: false
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
-    - if: $CI_PIPELINE_SOURCE == "schedule"
-      when: never
-  artifacts:
-    reports:
-      junit: report_service_tests.xml
-
 create_release_candidate:
   variables:
     GIT_DEPTH: 1

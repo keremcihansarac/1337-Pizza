@@ -1,3 +1,4 @@
+import logging
 import uuid
 from typing import List, Optional, TypeVar, Annotated
 
@@ -42,10 +43,12 @@ def get_all_orders(
 def create_order(order: OrderCreateSchema, db: Annotated[Session, Depends(get_db)],
                  copy_order_id: Optional[uuid.UUID] = None):
     if user_crud.get_user_by_id(order.user_id, db) is None:
+        logging.warning('Could not create order because user %s was not found', order.user_id)
         raise HTTPException(status_code=404, detail=order_not_found)
 
     # Create Order
     new_order = order_crud.create_order(order, db)
+    logging.info('Created order with id %s for user %s', new_order.id, order.user_id)
 
     # Check if Copy Order is specified
     if copy_order_id is None:
@@ -54,6 +57,11 @@ def create_order(order: OrderCreateSchema, db: Annotated[Session, Depends(get_db
     # Check Copy Order
     copy_order = order_crud.get_order_by_id(copy_order_id, db)
     if not copy_order:
+        logging.warning(
+            'Could not copy order %s into order %s because the source order was not found',
+            copy_order_id,
+            new_order.id,
+        )
         order_crud.delete_order_by_id(new_order.id, db)
         raise HTTPException(status_code=404, detail=order_not_found)
 
@@ -62,6 +70,11 @@ def create_order(order: OrderCreateSchema, db: Annotated[Session, Depends(get_db
         pizza_type = pizza.pizza_type
         if not stock_ingredients_crud.ingredients_are_available(pizza_type):
             # Not enough Stock
+            logging.warning(
+                'Could not copy pizza type %s into order %s because ingredients are missing',
+                pizza_type.id,
+                new_order.id,
+            )
             order_crud.delete_order_by_id(new_order.id, db)
             raise HTTPException(status_code=409, detail='Conflict')
 
@@ -75,6 +88,11 @@ def create_order(order: OrderCreateSchema, db: Annotated[Session, Depends(get_db
         if not stock_beverage_crud.change_stock_of_beverage(beverage_quantity.beverage_id,
                                                             -beverage_quantity.quantity, db):
             # Not enough Stock
+            logging.warning(
+                'Could not copy beverage %s into order %s because stock is too low',
+                beverage_quantity.beverage_id,
+                new_order.id,
+            )
             order_crud.delete_order_by_id(new_order.id, db)
             raise HTTPException(status_code=409, detail='Conflict')
 
@@ -123,15 +141,36 @@ def add_pizza_to_order(
 ):
     order = order_crud.get_order_by_id(order_id, db)
     if not order:
+        logging.warning(
+            'Could not add pizza type %s to order %s because the order was not found',
+            schema.pizza_type_id,
+            order_id,
+        )
         return Response(status_code=status.HTTP_404_NOT_FOUND)
 
     pizza_type = pizza_type_crud.get_pizza_type_by_id(schema.pizza_type_id, db)
     if not pizza_type:
+        logging.warning(
+            'Could not add pizza type %s to order %s because the pizza type was not found',
+            schema.pizza_type_id,
+            order_id,
+        )
         return Response(status_code=status.HTTP_404_NOT_FOUND)
     if not stock_ingredients_crud.ingredients_are_available(pizza_type):
+        logging.warning(
+            'Could not add pizza type %s to order %s because ingredients are missing',
+            schema.pizza_type_id,
+            order_id,
+        )
         return Response(status_code=status.HTTP_409_CONFLICT)
     stock_ingredients_crud.reduce_stock_of_ingredients(pizza_type, db)
     pizza = order_crud.add_pizza_to_order(order, pizza_type, db)
+    logging.info(
+        'Added pizza %s with pizza type %s to order %s',
+        pizza.id,
+        schema.pizza_type_id,
+        order_id,
+    )
     return pizza
 
 
@@ -156,17 +195,33 @@ def delete_pizza_from_order(
 ):
     order = order_crud.get_order_by_id(order_id, db)
     if not order:
+        logging.warning(
+            'Could not delete pizza %s from order %s because the order was not found',
+            pizza.id,
+            order_id,
+        )
         return Response(status_code=status.HTTP_404_NOT_FOUND)
 
     pizza_entity = order_crud.get_pizza_by_id(pizza.id, db)
     if not pizza_entity:
+        logging.warning(
+            'Could not delete pizza %s from order %s because the pizza was not found',
+            pizza.id,
+            order_id,
+        )
         return Response(status_code=status.HTTP_404_NOT_FOUND)
 
     stock_ingredients_crud.increase_stock_of_ingredients(pizza_entity.pizza_type, db)
 
     if not order_crud.delete_pizza_from_order(order, pizza.id, db):
+        logging.warning(
+            'Could not delete pizza %s from order %s because the relation was not found',
+            pizza.id,
+            order_id,
+        )
         return Response(status_code=status.HTTP_404_NOT_FOUND)
 
+    logging.info('Deleted pizza %s from order %s', pizza.id, order_id)
     return Response(status_code=status.HTTP_200_OK)
 
 
@@ -218,24 +273,57 @@ def create_order_beverage(
 ):
     order = order_crud.get_order_by_id(order_id, db)
     if not order:
+        logging.warning(
+            'Could not add beverage %s to order %s because the order was not found',
+            beverage_quantity.beverage_id,
+            order_id,
+        )
         return Response(status_code=status.HTTP_404_NOT_FOUND)
 
     # Check if new Quantity is valid
     if beverage_quantity.quantity <= 0:
+        logging.warning(
+            'Could not add beverage %s to order %s because quantity %s is invalid',
+            beverage_quantity.beverage_id,
+            order_id,
+            beverage_quantity.quantity,
+        )
         raise HTTPException(status_code=422)
 
     beverage = beverage_crud.get_beverage_by_id(beverage_quantity.beverage_id, db)
     if not beverage:
+        logging.warning(
+            'Could not add beverage %s to order %s because the beverage was not found',
+            beverage_quantity.beverage_id,
+            order_id,
+        )
         raise HTTPException(status_code=404, detail=order_not_found)
 
     beverage_quantity_found = order_crud.get_beverage_quantity_by_id(order_id, beverage_quantity.beverage_id, db)
     if beverage_quantity_found:
+        logging.warning(
+            'Could not add beverage %s to order %s because the relation already exists',
+            beverage_quantity.beverage_id,
+            order_id,
+        )
         raise HTTPException(status_code=status.HTTP_409_CONFLICT)
     # Change Stock of Beverage if enough is available
     if not stock_beverage_crud.beverage_is_available(beverage_quantity.beverage_id, beverage_quantity.quantity, db):
+        logging.warning(
+            'Could not add beverage %s with quantity %s to order %s because stock is too low',
+            beverage_quantity.beverage_id,
+            beverage_quantity.quantity,
+            order_id,
+        )
         raise HTTPException(status_code=status.HTTP_409_CONFLICT)
     stock_beverage_crud.change_stock_of_beverage(beverage_quantity.beverage_id, -beverage_quantity.quantity, db)
     new_beverage_quantity = order_crud.create_beverage_quantity(order, beverage_quantity, db)
+    logging.info(
+        'Added beverage %s with quantity %s to order %s',
+        beverage_quantity.beverage_id,
+        beverage_quantity.quantity,
+        order_id,
+    )
     return new_beverage_quantity
 
 
@@ -251,28 +339,63 @@ def update_beverage_of_order(
 ):
     order = order_crud.get_order_by_id(order_id, db)
     if not order:
+        logging.warning(
+            'Could not update beverage %s in order %s because the order was not found',
+            beverage_quantity.beverage_id,
+            order_id,
+        )
         return Response(status_code=status.HTTP_404_NOT_FOUND)
 
     # Check if new Quantity is valid
     if beverage_quantity.quantity <= 0:
+        logging.warning(
+            'Could not update beverage %s in order %s because quantity %s is invalid',
+            beverage_quantity.beverage_id,
+            order_id,
+            beverage_quantity.quantity,
+        )
         return Response(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY)
 
     beverage_id = beverage_quantity.beverage_id
     order_beverage_quantity = order_crud.get_beverage_quantity_by_id(order_id, beverage_id, db)
     if not order_beverage_quantity:
+        logging.warning(
+            'Could not update beverage %s in order %s because the relation was not found',
+            beverage_id,
+            order_id,
+        )
         raise HTTPException(status_code=404, detail=order_not_found)
     new_quantity = beverage_quantity.quantity
     old_quantity = order_beverage_quantity.quantity
     # Change Stock if enough is available: change Amount is Previous - New
     if not stock_beverage_crud.change_stock_of_beverage(beverage_id, old_quantity - new_quantity, db):
+        logging.warning(
+            'Could not update beverage %s in order %s from quantity %s to %s because stock is too low',
+            beverage_id,
+            order_id,
+            old_quantity,
+            new_quantity,
+        )
         raise HTTPException(status_code=409, detail='Conflict')
     # Update
     new_order_beverage_quantity = order_crud.update_beverage_quantity_of_order(
         order_id, beverage_quantity.beverage_id, beverage_quantity.quantity, db)
     # Return updated OrderBeverageQuantity
     if new_order_beverage_quantity:
+        logging.info(
+            'Updated beverage %s in order %s from quantity %s to %s',
+            beverage_id,
+            order_id,
+            old_quantity,
+            new_quantity,
+        )
         return new_order_beverage_quantity
     else:
+        logging.warning(
+            'Could not update beverage %s in order %s because the updated relation was not found',
+            beverage_id,
+            order_id,
+        )
         raise HTTPException(status_code=404, detail=order_not_found)
 
 

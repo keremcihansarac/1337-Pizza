@@ -1,16 +1,18 @@
+import logging
 import uuid
 from typing import List, Annotated
 
 from fastapi import APIRouter, Depends, Request, Response, status, HTTPException
 from sqlalchemy.orm import Session
 
-import app.api.v1.endpoints.topping.crud as topping_crud
-from app.api.v1.endpoints.topping.schemas import ToppingSchema, ToppingCreateSchema, ToppingListItemSchema
+import app.api.v1.endpoints.dough.crud as dough_crud
+from app.api.v1.endpoints.dough.schemas import DoughSchema, DoughCreateSchema, DoughListItemSchema
 from app.database.connection import SessionLocal
 
-router = APIRouter()
+dough_not_found = 'item not found'
 
-item_not_found = 'Item not found'
+
+router = APIRouter()
 
 
 def get_db():
@@ -21,73 +23,88 @@ def get_db():
         db.close()
 
 
-@router.get('', response_model=List[ToppingListItemSchema], tags=['topping'])
-def get_all_toppings(db: Annotated[Session, Depends(get_db)]):
-    toppings = topping_crud.get_all_toppings(db)
-    return toppings
+@router.get('', response_model=List[DoughListItemSchema], tags=['dough'])
+def get_all_doughs(db: Annotated[Session, Depends(get_db)]):
+    return dough_crud.get_all_doughs(db)
 
 
-@router.post('', response_model=ToppingSchema, status_code=status.HTTP_201_CREATED, tags=['topping'])
-def create_topping(topping: ToppingCreateSchema,
-                   request: Request,
-                   db: Annotated[Session, Depends(get_db)],
-                   ):
-    topping_found = topping_crud.get_topping_by_name(topping.name, db)
-
-    if topping_found:
+@router.post('', response_model=DoughSchema, status_code=status.HTTP_201_CREATED, tags=['dough'])
+def create_dough(dough: DoughCreateSchema,
+                 request: Request,
+                 db: Annotated[Session, Depends(get_db)],
+                 ):
+    dough_found = dough_crud.get_dough_by_name(dough.name, db)
+    if dough_found:
+        logging.warning('Could not create dough with name %s because it already exists', dough.name)
         raise HTTPException(status_code=status.HTTP_409_CONFLICT)
 
-    new_topping = topping_crud.create_topping(topping, db)
-    return new_topping
+    new_dough = dough_crud.create_dough(dough, db)
+    logging.info(
+        'Created dough with id %s, name %s and stock %s',
+        new_dough.id,
+        dough.name,
+        dough.stock,
+    )
+    return new_dough
 
 
-@router.put('/{topping_id}', response_model=ToppingSchema, tags=['topping'])
-def update_topping(
-        topping_id: uuid.UUID,
-        changed_topping: ToppingCreateSchema,
+@router.put('/{dough_id}', response_model=DoughSchema, tags=['dough'])
+def update_dough(
+        dough_id: uuid.UUID,
+        changed_dough: DoughCreateSchema,
         request: Request,
         response: Response,
         db: Annotated[Session, Depends(get_db)],
 ):
-    topping_found = topping_crud.get_topping_by_id(topping_id, db)
-    updated_topping = None
+    dough_found = dough_crud.get_dough_by_id(dough_id, db)
+    updated_dough = None
 
-    if topping_found:
-        if topping_found.name == changed_topping.name:
-            topping_crud.update_topping(topping_found, changed_topping, db)
+    if dough_found:
+        if dough_found.name == changed_dough.name:
+            dough_crud.update_dough(dough_found, changed_dough, db)
+            logging.info('Updated dough with id %s and name %s', dough_id, changed_dough.name)
             return Response(status_code=status.HTTP_204_NO_CONTENT)
         else:
-            topping_name_found = topping_crud.get_topping_by_name(changed_topping.name, db)
-            if topping_name_found:
+            dough_name_found = dough_crud.get_dough_by_name(changed_dough.name, db)
+            if dough_name_found:
+                logging.warning(
+                    'Could not update dough %s to name %s because the name already exists',
+                    dough_id,
+                    changed_dough.name,
+                )
                 raise HTTPException(status_code=status.HTTP_409_CONFLICT)
             else:
-                updated_topping = topping_crud.create_topping(changed_topping, db)
+                updated_dough = dough_crud.create_dough(changed_dough, db)
+                logging.info(
+                    'Created dough with id %s and name %s while updating missing name',
+                    updated_dough.id,
+                    changed_dough.name,
+                )
                 response.status_code = status.HTTP_201_CREATED
     else:
-        raise HTTPException(status_code=404, detail=item_not_found)
+        logging.warning('Could not update dough %s because it was not found', dough_id)
+        raise HTTPException(status_code=404, detail=dough_not_found)
 
-    return updated_topping
-
-
-@router.get('/{topping_id}', response_model=ToppingSchema, tags=['topping'])
-def get_topping(topping_id: uuid.UUID,
-                response: Response,
-                db: Annotated[Session, Depends(get_db)],
-                ):
-    topping = topping_crud.get_topping_by_id(topping_id, db)
-
-    if not topping:
-        raise HTTPException(status_code=404, detail=item_not_found)
-
-    return topping
+    return updated_dough
 
 
-@router.delete('/{topping_id}', response_model=None, tags=['topping'])
-def delete_topping(topping_id: uuid.UUID, db: Annotated[Session, Depends(get_db)]):
-    topping = topping_crud.get_topping_by_id(topping_id, db)
+@router.get('/{dough_id}', response_model=DoughSchema, tags=['dough'])
+def get_dough(dough_id: uuid.UUID,
+              db: Annotated[Session, Depends(get_db)],
+              ):
+    dough = dough_crud.get_dough_by_id(dough_id, db)
 
-    if not topping:
-        raise HTTPException(status_code=404, detail=item_not_found)
+    if not dough:
+        raise HTTPException(status_code=404, detail=dough_not_found)
+    return dough
 
-    topping_crud.delete_topping_by_id(topping_id, db)
+
+@router.delete('/{dough_id}', response_model=None, tags=['dough'])
+def delete_dough(dough_id: uuid.UUID, db: Annotated[Session, Depends(get_db)]):
+    dough = dough_crud.get_dough_by_id(dough_id, db)
+
+    if not dough:
+        raise HTTPException(status_code=404, detail=dough_not_found)
+
+    dough_crud.delete_dough_by_id(dough_id, db)
     return Response(status_code=status.HTTP_204_NO_CONTENT)

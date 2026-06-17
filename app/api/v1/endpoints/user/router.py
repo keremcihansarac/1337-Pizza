@@ -33,6 +33,7 @@ def get_all_users(
 @router.post('', response_model=UserSchema, status_code=status.HTTP_201_CREATED, tags=['user'])
 def create_user(user: UserCreateSchema, db: Annotated[Session, Depends(get_db)]):
     new_user = user_crud.create_user(user, db)
+    logging.info('Created user with id %s and username %s', new_user.id, user.username)
     return new_user
 
 
@@ -46,6 +47,7 @@ def update_user(
 
     if user_found:
         user_crud.update_user(user_found, changed_user, db)
+        logging.info('Updated user with id %s and username %s', user_id, changed_user.username)
         return Response(status_code=status.HTTP_204_NO_CONTENT)
     else:
         logging.error('User {} not found'.format(user_id))
