@@ -1,3 +1,4 @@
+import logging
 import uuid
 from typing import List, TypeVar, Annotated
 
@@ -42,14 +43,27 @@ def create_pizza_type(
     pizza_type_found = pizza_type_crud.get_pizza_type_by_name(pizza_type.name, db)
 
     if pizza_type_found:
+        logging.warning('Pizza type creation failed: name %s already exists', pizza_type.name)
         raise HTTPException(status_code=status.HTTP_409_CONFLICT)
 
     dough = dough_crud.get_dough_by_id(pizza_type.dough_id, db)
     if not dough:
+        logging.warning(
+            'Pizza type creation failed: dough_id=%s not found for name %s',
+            pizza_type.dough_id,
+            pizza_type.name,
+        )
         raise HTTPException(status_code=404, detail=pizza_type_not_found)
 
     new_pizza_type = pizza_type_crud.create_pizza_type(pizza_type, db)
     response.status_code = status.HTTP_201_CREATED
+    logging.info(
+        'Pizza type created: id=%s name=%s dough_id=%s price=%s',
+        new_pizza_type.id,
+        new_pizza_type.name,
+        new_pizza_type.dough_id,
+        new_pizza_type.price,
+    )
     return new_pizza_type
 
 
@@ -67,15 +81,34 @@ def update_pizza_type(
     if pizza_type_found:
         if pizza_type_found.name == changed_pizza_type.name:
             pizza_type_crud.update_pizza_type(pizza_type_found, changed_pizza_type, db)
+            logging.info(
+                'Pizza type updated: id=%s name=%s dough_id=%s price=%s',
+                pizza_type_id,
+                changed_pizza_type.name,
+                changed_pizza_type.dough_id,
+                changed_pizza_type.price,
+            )
             return Response(status_code=status.HTTP_204_NO_CONTENT)
         else:
             pizza_type_name_found = pizza_type_crud.get_pizza_type_by_name(changed_pizza_type.name, db)
             if pizza_type_name_found:
+                logging.warning(
+                    'Pizza type update failed: id=%s cannot be renamed to existing name %s',
+                    pizza_type_id,
+                    changed_pizza_type.name,
+                )
                 raise HTTPException(status_code=status.HTTP_409_CONFLICT)
             else:
                 updated_pizza_type = pizza_type_crud.create_pizza_type(changed_pizza_type, db)
                 response.status_code = status.HTTP_201_CREATED
+                logging.info(
+                    'Pizza type update created replacement: requested_id=%s new_id=%s name=%s',
+                    pizza_type_id,
+                    updated_pizza_type.id,
+                    updated_pizza_type.name,
+                )
     else:
+        logging.warning('Pizza type update failed: id=%s not found', pizza_type_id)
         raise HTTPException(status_code=404, detail=pizza_type_not_found)
 
     return updated_pizza_type
@@ -156,16 +189,37 @@ def create_pizza_type_topping(
 ):
     pizza_type = pizza_type_crud.get_pizza_type_by_id(pizza_type_id, db)
     if not pizza_type:
+        logging.warning(
+            'Pizza type topping creation failed: pizza_type_id=%s not found for topping_id=%s',
+            pizza_type_id,
+            topping_quantity.topping_id,
+        )
         raise HTTPException(status_code=404, detail=pizza_type_not_found)
 
     if not topping_crud.get_topping_by_id(topping_quantity.topping_id, db):
+        logging.warning(
+            'Pizza type topping creation failed: topping_id=%s not found for pizza_type_id=%s',
+            topping_quantity.topping_id,
+            pizza_type_id,
+        )
         raise HTTPException(status_code=404, detail=pizza_type_not_found)
 
     topping_quantity_found = pizza_type_crud.get_topping_quantity_by_id(pizza_type_id, topping_quantity.topping_id, db)
     if topping_quantity_found:
+        logging.warning(
+            'Pizza type topping creation failed: pizza_type_id=%s already has topping_id=%s',
+            pizza_type_id,
+            topping_quantity.topping_id,
+        )
         raise HTTPException(status_code=status.HTTP_409_CONFLICT)
 
     new_topping_quantity = pizza_type_crud.create_topping_quantity(pizza_type, topping_quantity, db)
+    logging.info(
+        'Pizza type topping created: pizza_type_id=%s topping_id=%s quantity=%s',
+        pizza_type_id,
+        new_topping_quantity.topping_id,
+        new_topping_quantity.quantity,
+    )
     return new_topping_quantity
 
 

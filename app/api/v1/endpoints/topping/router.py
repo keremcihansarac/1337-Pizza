@@ -1,3 +1,4 @@
+import logging
 import uuid
 from typing import List, Annotated
 
@@ -35,9 +36,17 @@ def create_topping(topping: ToppingCreateSchema,
     topping_found = topping_crud.get_topping_by_name(topping.name, db)
 
     if topping_found:
+        logging.warning('Topping creation failed: name %s already exists', topping.name)
         raise HTTPException(status_code=status.HTTP_409_CONFLICT)
 
     new_topping = topping_crud.create_topping(topping, db)
+    logging.info(
+        'Topping created: id=%s name=%s price=%s stock=%s',
+        new_topping.id,
+        new_topping.name,
+        new_topping.price,
+        new_topping.stock,
+    )
     return new_topping
 
 
@@ -55,15 +64,34 @@ def update_topping(
     if topping_found:
         if topping_found.name == changed_topping.name:
             topping_crud.update_topping(topping_found, changed_topping, db)
+            logging.info(
+                'Topping updated: id=%s name=%s price=%s stock=%s',
+                topping_id,
+                changed_topping.name,
+                changed_topping.price,
+                changed_topping.stock,
+            )
             return Response(status_code=status.HTTP_204_NO_CONTENT)
         else:
             topping_name_found = topping_crud.get_topping_by_name(changed_topping.name, db)
             if topping_name_found:
+                logging.warning(
+                    'Topping update failed: id=%s cannot be renamed to existing name %s',
+                    topping_id,
+                    changed_topping.name,
+                )
                 raise HTTPException(status_code=status.HTTP_409_CONFLICT)
             else:
                 updated_topping = topping_crud.create_topping(changed_topping, db)
                 response.status_code = status.HTTP_201_CREATED
+                logging.info(
+                    'Topping update created replacement: requested_id=%s new_id=%s name=%s',
+                    topping_id,
+                    updated_topping.id,
+                    updated_topping.name,
+                )
     else:
+        logging.warning('Topping update failed: id=%s not found', topping_id)
         raise HTTPException(status_code=404, detail=item_not_found)
 
     return updated_topping

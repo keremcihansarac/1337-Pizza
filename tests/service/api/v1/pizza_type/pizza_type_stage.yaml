@@ -6,7 +6,7 @@ description:
   Reusable test stage for creating doughs
 
 variables:
-  pizza_name: "Mozzarella"
+  pizza_name: "Service Test Mozzarella Pizza"
   pizza_price: 5
   pizza_description: "Italian quality"
 

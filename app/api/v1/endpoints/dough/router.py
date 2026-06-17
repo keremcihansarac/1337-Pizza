@@ -1,3 +1,4 @@
+import logging
 import uuid
 from typing import List, Annotated
 
@@ -34,9 +35,17 @@ def create_dough(dough: DoughCreateSchema,
                  ):
     dough_found = dough_crud.get_dough_by_name(dough.name, db)
     if dough_found:
+        logging.warning('Dough creation failed: name %s already exists', dough.name)
         raise HTTPException(status_code=status.HTTP_409_CONFLICT)
 
     new_dough = dough_crud.create_dough(dough, db)
+    logging.info(
+        'Dough created: id=%s name=%s price=%s stock=%s',
+        new_dough.id,
+        new_dough.name,
+        new_dough.price,
+        new_dough.stock,
+    )
     return new_dough
 
 
@@ -54,15 +63,34 @@ def update_dough(
     if dough_found:
         if dough_found.name == changed_dough.name:
             dough_crud.update_dough(dough_found, changed_dough, db)
+            logging.info(
+                'Dough updated: id=%s name=%s price=%s stock=%s',
+                dough_id,
+                changed_dough.name,
+                changed_dough.price,
+                changed_dough.stock,
+            )
             return Response(status_code=status.HTTP_204_NO_CONTENT)
         else:
             dough_name_found = dough_crud.get_dough_by_name(changed_dough.name, db)
             if dough_name_found:
+                logging.warning(
+                    'Dough update failed: id=%s cannot be renamed to existing name %s',
+                    dough_id,
+                    changed_dough.name,
+                )
                 raise HTTPException(status_code=status.HTTP_409_CONFLICT)
             else:
                 updated_dough = dough_crud.create_dough(changed_dough, db)
                 response.status_code = status.HTTP_201_CREATED
+                logging.info(
+                    'Dough update created replacement: requested_id=%s new_id=%s name=%s',
+                    dough_id,
+                    updated_dough.id,
+                    updated_dough.name,
+                )
     else:
+        logging.warning('Dough update failed: id=%s not found', dough_id)
         raise HTTPException(status_code=404, detail=dough_not_found)
 
     return updated_dough

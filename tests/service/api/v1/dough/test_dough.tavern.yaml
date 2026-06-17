@@ -89,13 +89,13 @@ stages:
       method: PUT
       json:
         <<: *dough
-        name: "Italian Style"
+        name: "Service Test Italian Style"
     response:
       status_code: 201
       json:
         <<: *dough
         id: !anything
-        name: "Italian Style"
+        name: "Service Test Italian Style"
       save:
         json:
           italian_id: id
@@ -106,7 +106,7 @@ stages:
       method: PUT
       json:
         <<: *dough
-        name: "Italian Style"
+        name: "Service Test Italian Style"
     response:
       status_code: 409
 
@@ -116,7 +116,7 @@ stages:
       method: PUT
       json:
         <<: *dough
-        name: "Italian Style"
+        name: "Service Test Italian Style"
     response:
       status_code: 404
 

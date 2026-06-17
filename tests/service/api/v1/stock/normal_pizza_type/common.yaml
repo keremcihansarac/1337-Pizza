@@ -12,14 +12,14 @@ variables:
 
   order_price_beverage: 5.98
 
-  username: "stkekrie"
+  username: "service-test-stock-user"
 
-  dough_name: "Whole Grain"
+  dough_name: "Service Test Stock Dough"
   dough_price: 1.50
   dough_description: "Test Dough"
   dough_stock: 2
 
-  topping_name: "Salami"
+  topping_name: "Service Test Stock Topping"
   topping_price: 1.50
   topping_description: "Italian quality"
 

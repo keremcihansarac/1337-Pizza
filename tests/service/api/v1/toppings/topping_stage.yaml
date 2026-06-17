@@ -6,12 +6,12 @@ description:
   Reusable test stage for creating doughs
 
 variables:
-  topping_name: "Mozzarella"
+  topping_name: "Service Test Mozzarella"
   topping_price: 0.50
   topping_description: "Italian quality"
   topping_stock: 10
 
-  topping2_name: "Mais"
+  topping2_name: "Service Test Mais"
   topping2_price: 1.0
   topping2_description: "corny"
   topping2_stock: 10

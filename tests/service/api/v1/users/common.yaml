@@ -5,15 +5,15 @@ description: common test information
 
 variables:
 
-  testUsername: "istjaklar"
+  testUsername: "service-test-user"
 
-  new_testUsername: "newUser"
+  new_testUsername: "service-test-user-renamed"
 
-  dough_name: "Whole Grain"
+  dough_name: "Service Test User Dough"
   dough_price: 1.50
   dough_description: "Test Dough"
   dough_stock: 10
 
-  pizza_name: "Salami"
+  pizza_name: "Service Test User Pizza"
   pizza_price: 5
   pizza_description: "Italian quality"

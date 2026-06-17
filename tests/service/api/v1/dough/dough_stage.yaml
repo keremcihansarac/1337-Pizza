@@ -6,7 +6,7 @@ description:
   Reusable test stage for creating doughs
 
 variables:
-  dough_name: "classic"
+  dough_name: "Service Test Classic"
   dough_price: 1.50
   dough_description: "Test Dough"
   dough_stock: 10

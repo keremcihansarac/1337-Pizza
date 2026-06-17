@@ -95,13 +95,13 @@ stages:
       method: PUT
       json:
         <<: *cola_beverage
-        name: "Sprite"
+        name: "Service Test Sprite"
     response:
       status_code: 201
       json:
         <<: *cola_beverage
         id: !anything
-        name: "Sprite"
+        name: "Service Test Sprite"
       save:
         json:
           beverage_id2: id
