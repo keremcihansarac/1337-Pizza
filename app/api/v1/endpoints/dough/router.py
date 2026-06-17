@@ -1,6 +1,6 @@
+import logging
 import uuid
 from typing import List, Annotated
-import logging
 
 from fastapi import APIRouter, Depends, Request, Response, status, HTTPException
 from sqlalchemy.orm import Session
@@ -35,11 +35,17 @@ def create_dough(dough: DoughCreateSchema,
                  ):
     dough_found = dough_crud.get_dough_by_name(dough.name, db)
     if dough_found:
-        logging.warning('Could not create dough with name %s because it already exists', dough.name)
+        logging.warning('Dough creation failed: name %s already exists', dough.name)
         raise HTTPException(status_code=status.HTTP_409_CONFLICT)
 
     new_dough = dough_crud.create_dough(dough, db)
-    logging.info('Created dough with id %s, name %s and stock %s', new_dough.id, dough.name, dough.stock)
+    logging.info(
+        'Dough created: id=%s name=%s price=%s stock=%s',
+        new_dough.id,
+        new_dough.name,
+        new_dough.price,
+        new_dough.stock,
+    )
     return new_dough
 
 
@@ -57,21 +63,34 @@ def update_dough(
     if dough_found:
         if dough_found.name == changed_dough.name:
             dough_crud.update_dough(dough_found, changed_dough, db)
-            logging.info('Updated dough with id %s and name %s', dough_id, changed_dough.name)
+            logging.info(
+                'Dough updated: id=%s name=%s price=%s stock=%s',
+                dough_id,
+                changed_dough.name,
+                changed_dough.price,
+                changed_dough.stock,
+            )
             return Response(status_code=status.HTTP_204_NO_CONTENT)
         else:
             dough_name_found = dough_crud.get_dough_by_name(changed_dough.name, db)
             if dough_name_found:
                 logging.warning(
-                    'Could not update dough %s to name %s because the name already exists',
+                    'Dough update failed: id=%s cannot be renamed to existing name %s',
                     dough_id,
                     changed_dough.name,
                 )
                 raise HTTPException(status_code=status.HTTP_409_CONFLICT)
             else:
-                logging.warning('Could not update dough %s because it was not found', dough_id)
-                raise HTTPException(status_code=404, detail=dough_not_found)
+                updated_dough = dough_crud.create_dough(changed_dough, db)
+                response.status_code = status.HTTP_201_CREATED
+                logging.info(
+                    'Dough update created replacement: requested_id=%s new_id=%s name=%s',
+                    dough_id,
+                    updated_dough.id,
+                    updated_dough.name,
+                )
     else:
+        logging.warning('Dough update failed: id=%s not found', dough_id)
         raise HTTPException(status_code=404, detail=dough_not_found)
 
     return updated_dough

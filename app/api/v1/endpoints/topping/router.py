@@ -1,3 +1,4 @@
+import logging
 import uuid
 from typing import List, Annotated
 
@@ -7,7 +8,6 @@ from sqlalchemy.orm import Session
 import app.api.v1.endpoints.topping.crud as topping_crud
 from app.api.v1.endpoints.topping.schemas import ToppingSchema, ToppingCreateSchema, ToppingListItemSchema
 from app.database.connection import SessionLocal
-import logging
 
 router = APIRouter()
 
@@ -36,11 +36,17 @@ def create_topping(topping: ToppingCreateSchema,
     topping_found = topping_crud.get_topping_by_name(topping.name, db)
 
     if topping_found:
-        logging.warning('Could not create topping with name %s because it already exists', topping.name)
+        logging.warning('Topping creation failed: name %s already exists', topping.name)
         raise HTTPException(status_code=status.HTTP_409_CONFLICT)
 
     new_topping = topping_crud.create_topping(topping, db)
-    logging.info('Created topping with id %s, name %s and stock %s', new_topping.id, topping.name, topping.stock)
+    logging.info(
+        'Topping created: id=%s name=%s price=%s stock=%s',
+        new_topping.id,
+        new_topping.name,
+        new_topping.price,
+        new_topping.stock,
+    )
     return new_topping
 
 
@@ -58,21 +64,34 @@ def update_topping(
     if topping_found:
         if topping_found.name == changed_topping.name:
             topping_crud.update_topping(topping_found, changed_topping, db)
-            logging.info('Updated topping with id %s and name %s', topping_id, changed_topping.name)
+            logging.info(
+                'Topping updated: id=%s name=%s price=%s stock=%s',
+                topping_id,
+                changed_topping.name,
+                changed_topping.price,
+                changed_topping.stock,
+            )
             return Response(status_code=status.HTTP_204_NO_CONTENT)
         else:
             topping_name_found = topping_crud.get_topping_by_name(changed_topping.name, db)
             if topping_name_found:
                 logging.warning(
-                    'Could not update topping %s to name %s because the name already exists',
+                    'Topping update failed: id=%s cannot be renamed to existing name %s',
                     topping_id,
                     changed_topping.name,
                 )
                 raise HTTPException(status_code=status.HTTP_409_CONFLICT)
             else:
-                logging.warning('Could not update topping %s because it was not found', topping_id)
-                raise HTTPException(status_code=404, detail=item_not_found)
+                updated_topping = topping_crud.create_topping(changed_topping, db)
+                response.status_code = status.HTTP_201_CREATED
+                logging.info(
+                    'Topping update created replacement: requested_id=%s new_id=%s name=%s',
+                    topping_id,
+                    updated_topping.id,
+                    updated_topping.name,
+                )
     else:
+        logging.warning('Topping update failed: id=%s not found', topping_id)
         raise HTTPException(status_code=404, detail=item_not_found)
 
     return updated_topping
