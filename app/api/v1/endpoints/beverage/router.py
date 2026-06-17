@@ -1,9 +1,9 @@
-import logging
 import uuid
 from typing import List, Annotated
 
 from fastapi import APIRouter, Depends, Request, Response, status, HTTPException
 from sqlalchemy.orm import Session
+import logging
 
 import app.api.v1.endpoints.beverage.crud as beverage_crud
 from app.api.v1.endpoints.beverage.schemas import BeverageSchema, BeverageCreateSchema, BeverageListItemSchema
@@ -35,19 +35,11 @@ def create_beverage(beverage: BeverageCreateSchema,
     beverage_found = beverage_crud.get_beverage_by_name(beverage.name, db)
 
     if beverage_found:
-        logging.warning(
-            'Could not create beverage with name %s because it already exists',
-            beverage.name,
-        )
+        logging.warning('Could not create beverage with name %s because it already exists', beverage.name)
         raise HTTPException(status_code=status.HTTP_409_CONFLICT)
 
     new_beverage = beverage_crud.create_beverage(beverage, db)
-    logging.info(
-        'Created beverage with id %s, name %s and stock %s',
-        new_beverage.id,
-        beverage.name,
-        beverage.stock,
-    )
+    logging.info('Created beverage with id %s, name %s and stock %s', new_beverage.id, beverage.name, beverage.stock)
     return new_beverage
 
 
@@ -64,11 +56,7 @@ def update_beverage(
     if beverage_found:
         if beverage_found.name == changed_beverage.name:
             beverage_crud.update_beverage(beverage_found, changed_beverage, db)
-            logging.info(
-                'Updated beverage with id %s and name %s',
-                beverage_id,
-                changed_beverage.name,
-            )
+            logging.info('Updated beverage with id %s and name %s', beverage_id, changed_beverage.name)
             return Response(status_code=status.HTTP_204_NO_CONTENT)
         else:
             beverage_name_found = beverage_crud.get_beverage_by_name(changed_beverage.name, db)
@@ -80,15 +68,9 @@ def update_beverage(
                 )
                 raise HTTPException(status_code=status.HTTP_409_CONFLICT)
             else:
-                updated_beverage = beverage_crud.create_beverage(changed_beverage, db)
-                logging.info(
-                    'Created beverage with id %s and name %s while updating missing name',
-                    updated_beverage.id,
-                    changed_beverage.name,
-                )
-                response.status_code = status.HTTP_201_CREATED
+                logging.warning('Could not update beverage %s because it was not found', beverage_id)
+                raise HTTPException(status_code=404, detail=beverage_not_found)
     else:
-        logging.warning('Could not update beverage %s because it was not found', beverage_id)
         raise HTTPException(status_code=404, detail=beverage_not_found)
 
     return updated_beverage

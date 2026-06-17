@@ -33,7 +33,6 @@ def get_all_users(
 @router.post('', response_model=UserSchema, status_code=status.HTTP_201_CREATED, tags=['user'])
 def create_user(user: UserCreateSchema, db: Annotated[Session, Depends(get_db)]):
     new_user = user_crud.create_user(user, db)
-    logging.info('Created user with id %s and username %s', new_user.id, user.username)
     return new_user
 
 

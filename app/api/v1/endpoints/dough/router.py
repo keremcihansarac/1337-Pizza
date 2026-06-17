@@ -1,15 +1,19 @@
-import logging
 import uuid
 from typing import List, Annotated
+import logging
 
 from fastapi import APIRouter, Depends, Request, Response, status, HTTPException
 from sqlalchemy.orm import Session
 
-import app.api.v1.endpoints.beverage.crud as beverage_crud
-from app.api.v1.endpoints.beverage.schemas import BeverageSchema, BeverageCreateSchema, BeverageListItemSchema
+import app.api.v1.endpoints.dough.crud as dough_crud
+from app.api.v1.endpoints.dough.schemas import DoughSchema, DoughCreateSchema, DoughListItemSchema
 from app.database.connection import SessionLocal
 
-beverage_not_found = 'Item not found'
+dough_not_found = 'item not found'
+
+
+router = APIRouter()
+
 
 def get_db():
     db = SessionLocal()
@@ -19,102 +23,77 @@ def get_db():
         db.close()
 
 
-router = APIRouter()
+@router.get('', response_model=List[DoughListItemSchema], tags=['dough'])
+def get_all_doughs(db: Annotated[Session, Depends(get_db)]):
+    return dough_crud.get_all_doughs(db)
 
 
-@router.get('', response_model=List[BeverageListItemSchema], tags=['beverage'])
-def get_all_beverages(db: Annotated[Session, Depends(get_db)]):
-    beverages = beverage_crud.get_all_beverages(db)
-    return beverages
-
-
-@router.post('', response_model=BeverageSchema, status_code=status.HTTP_201_CREATED, tags=['beverage'])
-def create_beverage(beverage: BeverageCreateSchema,
-                    request: Request,
-                    db: Annotated[Session, Depends(get_db)]):
-    beverage_found = beverage_crud.get_beverage_by_name(beverage.name, db)
-
-    if beverage_found:
-        logging.warning(
-            'Could not create beverage with name %s because it already exists',
-            beverage.name,
-        )
+@router.post('', response_model=DoughSchema, status_code=status.HTTP_201_CREATED, tags=['dough'])
+def create_dough(dough: DoughCreateSchema,
+                 request: Request,
+                 db: Annotated[Session, Depends(get_db)],
+                 ):
+    dough_found = dough_crud.get_dough_by_name(dough.name, db)
+    if dough_found:
+        logging.warning('Could not create dough with name %s because it already exists', dough.name)
         raise HTTPException(status_code=status.HTTP_409_CONFLICT)
 
-    new_beverage = beverage_crud.create_beverage(beverage, db)
-    logging.info(
-        'Created beverage with id %s, name %s and stock %s',
-        new_beverage.id,
-        beverage.name,
-        beverage.stock,
-    )
-    return new_beverage
+    new_dough = dough_crud.create_dough(dough, db)
+    logging.info('Created dough with id %s, name %s and stock %s', new_dough.id, dough.name, dough.stock)
+    return new_dough
 
 
-@router.put('/{beverage_id}', response_model=BeverageSchema, tags=['beverage'])
-def update_beverage(
-        beverage_id: uuid.UUID,
-        changed_beverage: BeverageCreateSchema,
+@router.put('/{dough_id}', response_model=DoughSchema, tags=['dough'])
+def update_dough(
+        dough_id: uuid.UUID,
+        changed_dough: DoughCreateSchema,
         request: Request,
         response: Response,
         db: Annotated[Session, Depends(get_db)],
 ):
-    beverage_found = beverage_crud.get_beverage_by_id(beverage_id, db)
+    dough_found = dough_crud.get_dough_by_id(dough_id, db)
+    updated_dough = None
 
-    if beverage_found:
-        if beverage_found.name == changed_beverage.name:
-            beverage_crud.update_beverage(beverage_found, changed_beverage, db)
-            logging.info(
-                'Updated beverage with id %s and name %s',
-                beverage_id,
-                changed_beverage.name,
-            )
+    if dough_found:
+        if dough_found.name == changed_dough.name:
+            dough_crud.update_dough(dough_found, changed_dough, db)
+            logging.info('Updated dough with id %s and name %s', dough_id, changed_dough.name)
             return Response(status_code=status.HTTP_204_NO_CONTENT)
         else:
-            beverage_name_found = beverage_crud.get_beverage_by_name(changed_beverage.name, db)
-            if beverage_name_found:
+            dough_name_found = dough_crud.get_dough_by_name(changed_dough.name, db)
+            if dough_name_found:
                 logging.warning(
-                    'Could not update beverage %s to name %s because the name already exists',
-                    beverage_id,
-                    changed_beverage.name,
+                    'Could not update dough %s to name %s because the name already exists',
+                    dough_id,
+                    changed_dough.name,
                 )
                 raise HTTPException(status_code=status.HTTP_409_CONFLICT)
             else:
-                updated_beverage = beverage_crud.create_beverage(changed_beverage, db)
-                logging.info(
-                    'Created beverage with id %s and name %s while updating missing name',
-                    updated_beverage.id,
-                    changed_beverage.name,
-                )
-                response.status_code = status.HTTP_201_CREATED
+                logging.warning('Could not update dough %s because it was not found', dough_id)
+                raise HTTPException(status_code=404, detail=dough_not_found)
     else:
-        logging.warning('Could not update beverage %s because it was not found', beverage_id)
-        raise HTTPException(status_code=404, detail=beverage_not_found)
+        raise HTTPException(status_code=404, detail=dough_not_found)
 
-    return updated_beverage
-
-
-@router.get('/{beverage_id}', response_model=BeverageSchema, tags=['beverage'])
-def get_beverage(
-        beverage_id: uuid.UUID,
-        db: Annotated[Session, Depends(get_db)],
-):
-    beverage = beverage_crud.get_beverage_by_id(beverage_id, db)
-
-    if not beverage:
-        raise HTTPException(status_code=404, detail=beverage_not_found)
-
-    return beverage
+    return updated_dough
 
 
-@router.delete('/{beverage_id}', response_model=None, tags=['beverage'])
-def delete_beverage(
-        beverage_id: uuid.UUID,
-        db: Annotated[Session, Depends(get_db)]):
-    beverage = beverage_crud.get_beverage_by_id(beverage_id, db)
+@router.get('/{dough_id}', response_model=DoughSchema, tags=['dough'])
+def get_dough(dough_id: uuid.UUID,
+              db: Annotated[Session, Depends(get_db)],
+              ):
+    dough = dough_crud.get_dough_by_id(dough_id, db)
 
-    if not beverage:
-        raise HTTPException(status_code=404, detail=beverage_not_found)
+    if not dough:
+        raise HTTPException(status_code=404, detail=dough_not_found)
+    return dough
 
-    beverage_crud.delete_beverage_by_id(beverage_id, db)
+
+@router.delete('/{dough_id}', response_model=None, tags=['dough'])
+def delete_dough(dough_id: uuid.UUID, db: Annotated[Session, Depends(get_db)]):
+    dough = dough_crud.get_dough_by_id(dough_id, db)
+
+    if not dough:
+        raise HTTPException(status_code=404, detail=dough_not_found)
+
+    dough_crud.delete_dough_by_id(dough_id, db)
     return Response(status_code=status.HTTP_204_NO_CONTENT)

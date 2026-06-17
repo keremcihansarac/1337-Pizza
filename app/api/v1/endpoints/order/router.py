@@ -1,9 +1,9 @@
-import logging
 import uuid
 from typing import List, Optional, TypeVar, Annotated
 
 from fastapi import APIRouter, Depends, Request, Response, status, HTTPException
 from sqlalchemy.orm import Session
+import logging
 
 import app.api.v1.endpoints.beverage.crud as beverage_crud
 import app.api.v1.endpoints.pizza_type.crud as pizza_type_crud
@@ -57,11 +57,6 @@ def create_order(order: OrderCreateSchema, db: Annotated[Session, Depends(get_db
     # Check Copy Order
     copy_order = order_crud.get_order_by_id(copy_order_id, db)
     if not copy_order:
-        logging.warning(
-            'Could not copy order %s into order %s because the source order was not found',
-            copy_order_id,
-            new_order.id,
-        )
         order_crud.delete_order_by_id(new_order.id, db)
         raise HTTPException(status_code=404, detail=order_not_found)
 
@@ -70,11 +65,6 @@ def create_order(order: OrderCreateSchema, db: Annotated[Session, Depends(get_db
         pizza_type = pizza.pizza_type
         if not stock_ingredients_crud.ingredients_are_available(pizza_type):
             # Not enough Stock
-            logging.warning(
-                'Could not copy pizza type %s into order %s because ingredients are missing',
-                pizza_type.id,
-                new_order.id,
-            )
             order_crud.delete_order_by_id(new_order.id, db)
             raise HTTPException(status_code=409, detail='Conflict')
 
@@ -88,11 +78,6 @@ def create_order(order: OrderCreateSchema, db: Annotated[Session, Depends(get_db
         if not stock_beverage_crud.change_stock_of_beverage(beverage_quantity.beverage_id,
                                                             -beverage_quantity.quantity, db):
             # Not enough Stock
-            logging.warning(
-                'Could not copy beverage %s into order %s because stock is too low',
-                beverage_quantity.beverage_id,
-                new_order.id,
-            )
             order_crud.delete_order_by_id(new_order.id, db)
             raise HTTPException(status_code=409, detail='Conflict')
 
@@ -165,12 +150,7 @@ def add_pizza_to_order(
         return Response(status_code=status.HTTP_409_CONFLICT)
     stock_ingredients_crud.reduce_stock_of_ingredients(pizza_type, db)
     pizza = order_crud.add_pizza_to_order(order, pizza_type, db)
-    logging.info(
-        'Added pizza %s with pizza type %s to order %s',
-        pizza.id,
-        schema.pizza_type_id,
-        order_id,
-    )
+    logging.info('Added pizza %s with pizza type %s to order %s', pizza.id, schema.pizza_type_id, order_id)
     return pizza
 
 
@@ -181,6 +161,7 @@ def get_pizzas_from_order(
 ):
     order = order_crud.get_order_by_id(order_id, db)
     if not order:
+        logging.warning('Could not delete pizza %s from order %s because the order was not found', pizza.id, order_id)
         return Response(status_code=status.HTTP_404_NOT_FOUND)
 
     pizzas = order_crud.get_all_pizzas_of_order(order, db)
@@ -195,30 +176,18 @@ def delete_pizza_from_order(
 ):
     order = order_crud.get_order_by_id(order_id, db)
     if not order:
-        logging.warning(
-            'Could not delete pizza %s from order %s because the order was not found',
-            pizza.id,
-            order_id,
-        )
         return Response(status_code=status.HTTP_404_NOT_FOUND)
 
     pizza_entity = order_crud.get_pizza_by_id(pizza.id, db)
     if not pizza_entity:
-        logging.warning(
-            'Could not delete pizza %s from order %s because the pizza was not found',
-            pizza.id,
-            order_id,
-        )
+        logging.warning('Could not delete pizza %s from order %s because the pizza was not found', pizza.id, order_id)
         return Response(status_code=status.HTTP_404_NOT_FOUND)
 
     stock_ingredients_crud.increase_stock_of_ingredients(pizza_entity.pizza_type, db)
 
     if not order_crud.delete_pizza_from_order(order, pizza.id, db):
-        logging.warning(
-            'Could not delete pizza %s from order %s because the relation was not found',
-            pizza.id,
-            order_id,
-        )
+        logging.warning('Could not delete pizza %s from order %s because the relation was not found', pizza.id,
+                        order_id)
         return Response(status_code=status.HTTP_404_NOT_FOUND)
 
     logging.info('Deleted pizza %s from order %s', pizza.id, order_id)
@@ -279,7 +248,6 @@ def create_order_beverage(
             order_id,
         )
         return Response(status_code=status.HTTP_404_NOT_FOUND)
-
     # Check if new Quantity is valid
     if beverage_quantity.quantity <= 0:
         logging.warning(
