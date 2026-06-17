@@ -7,7 +7,7 @@ description:
 
 variables:
 
-  beverage_name: "Fanta"
+  beverage_name: "Service Test Fanta"
   beverage_price: 2.99
   beverage_description: "Coca Cola Company"
   beverage_stock: 10

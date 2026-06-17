@@ -6,7 +6,7 @@ description:
   Reusable test stage for creating users
 
 variables:
-  username: "istjaklar"
+  username: "service-test-stage-user"
 
 stages:
   #Create User
