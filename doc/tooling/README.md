@@ -72,15 +72,21 @@ If you like it convenient: Add a button for ruff to your toolbar!
 # GrayLog
 
 - What is the purpose of GrayLog?
+Graylog is a log management tool used to collect, store, search, and analyze log data from different systems and applications.
 
 - What logging levels are available?
+ Debug, Info, Error, Warning, Critical
 
 - What is the default logging level?
+The default logging level is WARNING
 
 - Give 3-4 examples for logging commands in Python:
-  ```python
-
-  ```
+here are some logging commands in python
+import logging
+logging.debug("Debug message")
+logging.info("Program started")
+logging.warning("Low memory")
+logging.error("File not found")
 
 # SonarQube
 
