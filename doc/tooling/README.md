@@ -75,18 +75,30 @@ If you like it convenient: Add a button for ruff to your toolbar!
 Graylog is a log management tool used to collect, store, search, and analyze log data from different systems and applications.
 
 - What logging levels are available?
- Debug, Info, Error, Warning, Critical
+ Debug, Info, Error, Warning, Critical, Trace
 
 - What is the default logging level?
-The default logging level is WARNING
+The default logging level is WARNING.This means that only messages with the levels WARNING, ERROR, and CRITICAL are shown.
 
 - Give 3-4 examples for logging commands in Python:
-here are some logging commands in python
-import logging
-logging.debug("Debug message")
-logging.info("Program started")
-logging.warning("Low memory")
-logging.error("File not found")
+here are some logging commands:
+logging.info("GET /order - fetching all orders")
+
+logging.warning(
+    "create_pizza_type: Dough with id %s not found",
+    pizza_type.dough_id
+)
+
+logging.error(
+    "PUT /order/%s/beverages - beverage with id %s not found",
+    order_id,
+    beverage_id
+)
+
+logging.info(
+    "User created with username %s",
+    entity.username
+)
 
 # SonarQube
 
