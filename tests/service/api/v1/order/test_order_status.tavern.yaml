@@ -2,8 +2,6 @@
 
 test_name: Make sure server implements functionality for editing order status correctly
 
-marks:
-  - skip
 
 includes:
   - !include common.yaml
@@ -11,6 +9,7 @@ includes:
 
 stages:
   #Create User
+
   - type: ref
     id: create_user
 
@@ -37,7 +36,7 @@ stages:
         address:
           <<: *address
           id: !anything
-        order_status: !anything
+        order_status: "TRANSMITTED"
       save:
         json:
           address_id: address.id
@@ -60,6 +59,32 @@ stages:
           <<: *address
           id: "{address_id}"
 
+
+  - name: Get all orders without status filter and verify created order is included
+    request:
+      url: http://{tavern.env_vars.API_SERVER}:{tavern.env_vars.API_PORT}/v1/order
+      method: GET
+    response:
+      status_code: 200
+      verify_response_with:
+        - function: tests.service.api.v1.order.testing_utils:check_for_id_in_response_list
+          extra_kwargs:
+            element_id: "{order_id}"
+
+  - name: Get orders filtered by status "TRANSMITTED" and verify created order is included
+    request:
+      url: http://{tavern.env_vars.API_SERVER}:{tavern.env_vars.API_PORT}/v1/order?order_status=TRANSMITTED
+      method: GET
+    response:
+      status_code: 200
+      verify_response_with:
+        - function: tests.service.api.v1.order.testing_utils:check_for_id_in_response_list
+          extra_kwargs:
+            element_id: "{order_id}"
+        - function: tests.service.api.v1.order.testing_utils:check_all_orders_have_status
+          extra_kwargs:
+            order_status: "TRANSMITTED"
+
   - name: update order status and verify 204 with correct status "TRANSMITTED"
     request:
       url: http://{tavern.env_vars.API_SERVER}:{tavern.env_vars.API_PORT}/v1/order/{order_id}?order_status=TRANSMITTED
@@ -73,6 +98,50 @@ stages:
       method: PUT
     response:
       status_code: 204
+
+
+  - name: Get order with id and verify status "PREPARING"
+    request:
+      url: http://{tavern.env_vars.API_SERVER}:{tavern.env_vars.API_PORT}/v1/order/{order_id}
+      method: GET
+    response:
+      status_code: 200
+      json:
+        id: "{order_id}"
+        order_datetime: "{datetime}"
+        user_id: "{user_id}"
+        order_status: "PREPARING"
+        address:
+          <<: *address
+          id: "{address_id}"
+
+  - name: Get orders filtered by status "PREPARING" and verify created order is included
+    request:
+      url: http://{tavern.env_vars.API_SERVER}:{tavern.env_vars.API_PORT}/v1/order?order_status=PREPARING
+      method: GET
+    response:
+      status_code: 200
+      verify_response_with:
+        - function: tests.service.api.v1.order.testing_utils:check_for_id_in_response_list
+          extra_kwargs:
+            element_id: "{order_id}"
+        - function: tests.service.api.v1.order.testing_utils:check_all_orders_have_status
+          extra_kwargs:
+            order_status: "PREPARING"
+
+  - name: Get orders filtered by status "TRANSMITTED" and verify updated order is not included
+    request:
+      url: http://{tavern.env_vars.API_SERVER}:{tavern.env_vars.API_PORT}/v1/order?order_status=TRANSMITTED
+      method: GET
+    response:
+      status_code: 200
+      verify_response_with:
+        - function: tests.service.api.v1.order.testing_utils:check_for_id_not_in_response_list
+          extra_kwargs:
+            element_id: "{order_id}"
+        - function: tests.service.api.v1.order.testing_utils:check_all_orders_have_status
+          extra_kwargs:
+            order_status: "TRANSMITTED"
 
   - name: update order status and verify 204 with correct status "IN_DELIVERY"
     request:
@@ -88,10 +157,48 @@ stages:
     response:
       status_code: 204
 
+
+  - name: Get order with id and verify status "COMPLETED"
+    request:
+      url: http://{tavern.env_vars.API_SERVER}:{tavern.env_vars.API_PORT}/v1/order/{order_id}
+      method: GET
+    response:
+      status_code: 200
+      json:
+        id: "{order_id}"
+        order_datetime: "{datetime}"
+        user_id: "{user_id}"
+        order_status: "COMPLETED"
+        address:
+          <<: *address
+          id: "{address_id}"
+
+  - name: Get orders filtered by status "COMPLETED" and verify created order is included
+    request:
+      url: http://{tavern.env_vars.API_SERVER}:{tavern.env_vars.API_PORT}/v1/order?order_status=COMPLETED
+      method: GET
+    response:
+      status_code: 200
+      verify_response_with:
+        - function: tests.service.api.v1.order.testing_utils:check_for_id_in_response_list
+          extra_kwargs:
+            element_id: "{order_id}"
+        - function: tests.service.api.v1.order.testing_utils:check_all_orders_have_status
+          extra_kwargs:
+            order_status: "COMPLETED"
+
   - name: update order status and verify 422 with incorrect status "NOPENOPENOPE"
     request:
       url: http://{tavern.env_vars.API_SERVER}:{tavern.env_vars.API_PORT}/v1/order/{order_id}?order_status=NOPENOPENOPE
       method: PUT
+    response:
+      status_code: 422
+
+
+  - name: filter orders and verify 422 with incorrect status "NOPENOPENOPE"
+    request:
+      url: http://{tavern.env_vars.API_SERVER}:{tavern.env_vars.API_PORT}/v1/order?order_status=NOPENOPENOPE
+      method: GET
     response:
       status_code: 422
 
@@ -110,5 +217,6 @@ stages:
       status_code: 204
 
   #Delete user
+
   - type: ref
     id: delete_user

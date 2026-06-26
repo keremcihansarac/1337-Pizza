@@ -1,5 +1,5 @@
 import uuid
-from typing import List
+from typing import List, Optional
 
 from sqlalchemy import func
 from sqlalchemy.orm import Session
@@ -25,9 +25,12 @@ def get_order_by_id(order_id: uuid.UUID, db: Session):
     return entity
 
 
-def get_all_orders(db: Session):
-    entities = db.query(Order).all()
-    return entities
+def get_all_orders(db: Session, order_status: Optional[OrderStatus] = None):
+    query = db.query(Order)
+    if order_status is not None:
+        query = query.filter(Order.order_status == order_status)
+
+    return query.all()
 
 
 def delete_order_by_id(order_id: uuid.UUID, db: Session):
