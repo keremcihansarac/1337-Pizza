@@ -1,8 +1,11 @@
 def check_for_id_in_response_list(response, element_id):
-    json = response.json()
-    for element in json:
-        current_id = element.get('id')
-        if current_id == element_id:
-            break
+    assert any(element.get('id') == element_id for element in response.json())
 
-    assert current_id == element_id
+
+def check_for_id_not_in_response_list(response, element_id):
+    assert all(element.get('id') != element_id for element in response.json())
+
+
+def check_all_orders_have_status(response, order_status):
+    for element in response.json():
+        assert element.get('order_status') == order_status

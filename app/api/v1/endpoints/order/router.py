@@ -17,6 +17,7 @@ from app.api.v1.endpoints.order.schemas \
     OrderPriceSchema, OrderBeverageQuantityBaseSchema, OrderCreateSchema
 from app.api.v1.endpoints.user.schemas import UserSchema
 from app.database.connection import SessionLocal
+from app.database.models import OrderStatus
 
 router = APIRouter()
 
@@ -34,8 +35,9 @@ def get_db():
 @router.get('', response_model=List[OrderSchema], tags=['order'])
 def get_all_orders(
         db: Annotated[Session, Depends(get_db)],
+        order_status: Optional[OrderStatus] = None,
 ):
-    orders = order_crud.get_all_orders(db)
+    orders = order_crud.get_all_orders(db, order_status)
     return orders
 
 
@@ -125,6 +127,23 @@ def get_order(
         return Response(status_code=status.HTTP_404_NOT_FOUND)
 
     return order
+
+
+@router.put('/{order_id}', response_model=None, status_code=status.HTTP_204_NO_CONTENT, tags=['order'])
+def update_order_status(
+        order_id: uuid.UUID,
+        order_status: OrderStatus,
+        db: Annotated[Session, Depends(get_db)],
+):
+    order = order_crud.get_order_by_id(order_id, db)
+    if not order:
+        logging.warning('Update order status failed: order_id=%s not found for new_status=%s', order_id, order_status)
+        return Response(status_code=status.HTTP_404_NOT_FOUND)
+
+    old_status = order.order_status
+    order_crud.update_order_status(order, order_status, db)
+    logging.info('Order status updated: order_id=%s old_status=%s new_status=%s', order_id, old_status, order_status)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.delete('/{order_id}', response_model=None, tags=['order'])
